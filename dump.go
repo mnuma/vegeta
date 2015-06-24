@@ -8,7 +8,7 @@ import (
 	"os/signal"
 	"strings"
 
-	vegeta "github.com/tsenart/vegeta/lib"
+	vegeta "github.com/mnuma/vegeta/lib"
 )
 
 func dumpCmd() command {

@@ -16,14 +16,14 @@ import (
 	"strings"
 	"time"
 
-	vegeta "github.com/tsenart/vegeta/lib"
+	mnuma "github.com/mnuma/vegeta/lib"
 )
 
 func attackCmd() command {
 	fs := flag.NewFlagSet("vegeta attack", flag.ExitOnError)
 	opts := &attackOpts{
 		headers: headers{http.Header{}},
-		laddr:   localAddr{&vegeta.DefaultLocalAddr},
+		laddr:   localAddr{&mnuma.DefaultLocalAddr},
 	}
 
 	fs.StringVar(&opts.targetsf, "targets", "stdin", "Targets file")
@@ -32,11 +32,11 @@ func attackCmd() command {
 	fs.StringVar(&opts.certf, "cert", "", "x509 Certificate file")
 	fs.BoolVar(&opts.lazy, "lazy", false, "Read targets lazily")
 	fs.DurationVar(&opts.duration, "duration", 10*time.Second, "Duration of the test")
-	fs.DurationVar(&opts.timeout, "timeout", vegeta.DefaultTimeout, "Requests timeout")
+	fs.DurationVar(&opts.timeout, "timeout", mnuma.DefaultTimeout, "Requests timeout")
 	fs.Uint64Var(&opts.rate, "rate", 50, "Requests per second")
-	fs.Uint64Var(&opts.workers, "workers", vegeta.DefaultWorkers, "Initial number of workers")
-	fs.IntVar(&opts.connections, "connections", vegeta.DefaultConnections, "Max open idle connections per target host")
-	fs.IntVar(&opts.redirects, "redirects", vegeta.DefaultRedirects, "Number of redirects to follow. -1 will not follow but marks as success")
+	fs.Uint64Var(&opts.workers, "workers", mnuma.DefaultWorkers, "Initial number of workers")
+	fs.IntVar(&opts.connections, "connections", mnuma.DefaultConnections, "Max open idle connections per target host")
+	fs.IntVar(&opts.redirects, "redirects", mnuma.DefaultRedirects, "Number of redirects to follow. -1 will not follow but marks as success")
 	fs.Var(&opts.headers, "header", "Request header")
 	fs.Var(&opts.laddr, "laddr", "Local IP address")
 	fs.BoolVar(&opts.keepalive, "keepalive", true, "Use persistent connections")
@@ -103,13 +103,13 @@ func attack(opts *attackOpts) (err error) {
 	}
 
 	var (
-		tr  vegeta.Targeter
+		tr  mnuma.Targeter
 		src = files[opts.targetsf]
 		hdr = opts.headers.Header
 	)
 	if opts.lazy {
-		tr = vegeta.NewLazyTargeter(src, body, hdr)
-	} else if tr, err = vegeta.NewEagerTargeter(src, body, hdr); err != nil {
+		tr = mnuma.NewLazyTargeter(src, body, hdr)
+	} else if tr, err = mnuma.NewEagerTargeter(src, body, hdr); err != nil {
 		return err
 	}
 
@@ -125,21 +125,21 @@ func attack(opts *attackOpts) (err error) {
 			return fmt.Errorf("error reading %s: %s", opts.certf, err)
 		}
 	}
-	tlsc := *vegeta.DefaultTLSConfig
+	tlsc := *mnuma.DefaultTLSConfig
 	if opts.certf != "" {
 		if tlsc.RootCAs, err = certPool(cert); err != nil {
 			return err
 		}
 	}
 
-	atk := vegeta.NewAttacker(
-		vegeta.Redirects(opts.redirects),
-		vegeta.Timeout(opts.timeout),
-		vegeta.LocalAddr(*opts.laddr.IPAddr),
-		vegeta.TLSConfig(&tlsc),
-		vegeta.Workers(opts.workers),
-		vegeta.KeepAlive(opts.keepalive),
-		vegeta.Connections(opts.connections),
+	atk := mnuma.NewAttacker(
+		mnuma.Redirects(opts.redirects),
+		mnuma.Timeout(opts.timeout),
+		mnuma.LocalAddr(*opts.laddr.IPAddr),
+		mnuma.TLSConfig(&tlsc),
+		mnuma.Workers(opts.workers),
+		mnuma.KeepAlive(opts.keepalive),
+		mnuma.Connections(opts.connections),
 	)
 
 	res := atk.Attack(tr, opts.rate, opts.duration)

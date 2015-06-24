@@ -128,6 +128,9 @@ func NewLazyTargeter(src io.Reader, body []byte, hdr http.Header) Targeter {
 				if tgt.Body, err = ioutil.ReadFile(line[1:]); err != nil {
 					return nil, fmt.Errorf("bad body: %s", err)
 				}
+
+				tgt.Body = bytes.TrimRight(tgt.Body, "\n")
+
 				break
 			}
 			tokens = strings.SplitN(line, ":", 2)
